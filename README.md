@@ -1,6 +1,9 @@
-# OrderPulse.Webhooks
+# OrderPulse Webhook Engine
 
-A database-free Azure Functions webhook engine for OrderPulse.
+The solution is split into two projects:
+
+- `OrderPulse.Webhooks` — reusable class library containing the webhook engine.
+- `OrderPulse.Webhooks.Functions` — Azure Functions host containing the Service Bus-triggered Function and application startup.
 
 ## Core rule
 
@@ -22,16 +25,54 @@ The caller does not provide the destination URL, HTTP method, authentication, do
 ```text
 OrderPulse Function App
     -> Service Bus topic
-    -> WebhookDeliveryFunction
-    -> WebhookRouteResolver
-    -> WebhookPayloadMapperResolver
-    -> Destination-specific mapper
+    -> OrderPulse.Webhooks.Functions/WebhookDeliveryFunction
+    -> OrderPulse.Webhooks/WebhookRouteResolver
+    -> OrderPulse.Webhooks/WebhookPayloadMapperResolver
+    -> Destination- and event-specific mapper
     -> WebhookRequestBuilder
     -> Event-specific authentication policy chain
     -> WebhookSender
     -> Named HttpClient per destination
     -> exactly one downstream endpoint
 ```
+
+## Project responsibilities
+
+### OrderPulse.Webhooks
+
+The class library contains:
+
+- Contracts and models
+- Webhook publisher abstraction and Service Bus publisher
+- Route resolver
+- Payload mapper registry
+- Destination/event payload mappers
+- Authentication policies
+- HTTP request builder
+- Webhook sender
+- Delivery result classification
+- Configuration models and validation
+
+The class library does not contain:
+
+- Azure Function classes
+- `Program.cs`
+- `host.json`
+- Function App environment settings
+
+### OrderPulse.Webhooks.Functions
+
+The Azure Functions project contains:
+
+- `WebhookDeliveryFunction`
+- `Program.cs`
+- Dependency injection and named `HttpClient` registration
+- Service Bus trigger configuration
+- `host.json`
+- `appsettings.json`
+- `local.settings.example.json`
+
+It references `OrderPulse.Webhooks`.
 
 ## Included patterns
 
@@ -57,8 +98,8 @@ Secrets are referenced by environment-variable names and are never stored in `ap
 
 See:
 
-- `OrderPulse.Webhooks/appsettings.json`
-- `OrderPulse.Webhooks/local.settings.example.json`
+- `OrderPulse.Webhooks.Functions/appsettings.json`
+- `OrderPulse.Webhooks.Functions/local.settings.example.json`
 
 ## Example routes
 
@@ -76,17 +117,17 @@ OrderCancelled + PRO
 
 ## Local setup
 
-1. Copy `local.settings.example.json` to `local.settings.json`.
+1. Copy `OrderPulse.Webhooks.Functions/local.settings.example.json` to `OrderPulse.Webhooks.Functions/local.settings.json`.
 2. Add the Service Bus connection string and secrets.
 3. Ensure the topic and subscription exist.
-4. Run the Function App with Azure Functions Core Tools.
+4. Run `OrderPulse.Webhooks.Functions` with Azure Functions Core Tools.
 
 ## Adding a new webhook
 
 1. Add one route for the new `EventType + Channel` combination.
 2. Add or reuse a destination and operation configuration.
-3. Implement and register an `IWebhookPayloadMapper`.
-4. Select the operation authentication policies.
+3. Implement and register an `IWebhookPayloadMapper` in the class library.
+4. Select the operation authentication policies in the Functions configuration.
 5. Publish a canonical `WebhookPublishRequest` through `IWebhookPublisher`.
 
 Generic routing, request building, delivery, retry, and DLQ components should not need event-specific changes.
