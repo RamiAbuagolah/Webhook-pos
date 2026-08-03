@@ -21,6 +21,10 @@ public sealed record DestinationRoute(
     WebhookDestinationOptions Destination,
     WebhookOperationOptions Operation);
 
+public sealed record WebhookMappedPayload(
+    object Body,
+    IReadOnlyDictionary<string, string>? RouteValues = null);
+
 public sealed record WebhookRequestResult(
     bool IsSuccess,
     bool IsRetryable,
