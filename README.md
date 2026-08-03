@@ -49,6 +49,7 @@ The class library contains:
 - Destination/event payload mappers
 - Authentication policies
 - HTTP request builder
+- Dynamic route-value replacement
 - Webhook sender
 - Delivery result classification
 - Configuration models and validation
@@ -113,7 +114,49 @@ OrderCancelled + PRO
     -> PRO_WEBHOOK
     -> ProOrderCancelledMapper
     -> API key authentication
+
+AccountCreated + COMMERCE
+    -> COMMERCE_WEBHOOK
+    -> CommerceAccountCreatedMapper
+    -> PUT /api/accounts/{organisationId}
+    -> Bearer authentication
 ```
+
+## Account creation webhook
+
+Publish the account creation result using:
+
+```text
+EventType = AccountCreated
+Channel   = COMMERCE
+```
+
+Expected domain payload fields:
+
+```json
+{
+  "accountId": "account-id",
+  "organisationId": "organisation-id",
+  "organisationName": "Organisation name",
+  "dynamicsAccountId": "C00123456"
+}
+```
+
+The mapper creates the Commerce request body:
+
+```json
+{
+  "name": "Organisation name",
+  "properties": [
+    {
+      "key": "AccountNumber",
+      "value": "C00123456"
+    }
+  ]
+}
+```
+
+The `organisationId` is URL-encoded and replaces `{organisationId}` in the configured operation path. The request is sent as `PUT` using the `Webhook.COMMERCE` named client and the authentication policies configured for the `AccountCreated` operation.
 
 ## Local setup
 
