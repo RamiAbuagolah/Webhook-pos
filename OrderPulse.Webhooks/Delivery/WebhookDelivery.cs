@@ -12,14 +12,15 @@ public sealed class WebhookRequestBuilder(
 {
     public async Task<HttpRequestMessage> BuildAsync(
         DestinationRoute route,
-        object mappedPayload,
+        WebhookMappedPayload mappedPayload,
         string correlationId,
         CancellationToken cancellationToken = default)
     {
-        var body = JsonSerializer.SerializeToUtf8Bytes(mappedPayload);
+        var body = JsonSerializer.SerializeToUtf8Bytes(mappedPayload.Body);
+        var path = ResolvePath(route.Operation.Path, mappedPayload.RouteValues);
         var request = new HttpRequestMessage(
             new HttpMethod(route.Operation.Method),
-            route.Operation.Path)
+            path)
         {
             Content = new ByteArrayContent(body)
         };
@@ -40,6 +41,38 @@ public sealed class WebhookRequestBuilder(
         }
 
         return request;
+    }
+
+    private static string ResolvePath(
+        string pathTemplate,
+        IReadOnlyDictionary<string, string>? routeValues)
+    {
+        var path = pathTemplate;
+
+        if (routeValues is not null)
+        {
+            foreach (var (key, value) in routeValues)
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    throw new WebhookMappingException(
+                        $"Route value '{key}' cannot be empty.");
+                }
+
+                path = path.Replace(
+                    $"{{{key}}}",
+                    Uri.EscapeDataString(value),
+                    StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        if (path.Contains('{') || path.Contains('}'))
+        {
+            throw new WebhookMappingException(
+                $"Webhook path '{pathTemplate}' contains unresolved route values.");
+        }
+
+        return path;
     }
 }
 
