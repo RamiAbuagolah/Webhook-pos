@@ -7,6 +7,7 @@
     "WebhookTopic": "orders.notifications",
     "WebhookSubscription": "webhook",
     "STP_ORDER_CREATED_TOKEN": "<secret>",
-    "PRO_ORDER_CANCELLED_API_KEY": "<secret>"
+    "PRO_ORDER_CANCELLED_API_KEY": "<secret>",
+    "COMMERCE_ACCOUNT_CREATED_TOKEN": "<secret>"
   }
 }
