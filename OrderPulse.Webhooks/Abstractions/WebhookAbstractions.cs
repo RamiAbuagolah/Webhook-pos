@@ -29,7 +29,7 @@ public interface IWebhookRouteResolver
 public interface IWebhookPayloadMapper
 {
     string Key { get; }
-    object Map(JsonElement payload);
+    WebhookMappedPayload Map(JsonElement payload);
 }
 
 public interface IWebhookPayloadMapperResolver
@@ -41,7 +41,7 @@ public interface IWebhookRequestBuilder
 {
     Task<HttpRequestMessage> BuildAsync(
         DestinationRoute route,
-        object mappedPayload,
+        WebhookMappedPayload mappedPayload,
         string correlationId,
         CancellationToken cancellationToken = default);
 }
