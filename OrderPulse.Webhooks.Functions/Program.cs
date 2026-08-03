@@ -66,6 +66,7 @@ var host = new HostBuilder()
 
         services.AddSingleton<IWebhookPayloadMapper, StpOrderCreatedMapper>();
         services.AddSingleton<IWebhookPayloadMapper, ProOrderCancelledMapper>();
+        services.AddSingleton<IWebhookPayloadMapper, CommerceAccountCreatedMapper>();
 
         services.AddSingleton<IWebhookAuthPolicyResolver, WebhookAuthPolicyResolver>();
         services.AddSingleton<IWebhookAuthPolicy, ApiKeyWebhookAuthPolicy>();
